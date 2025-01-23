@@ -36,10 +36,10 @@ const props = defineProps({
 });
 let { handleChange, valueFromEvent } = fieldMixin.setup(props, { emit });
 
-let formData = toRaw(props.modelValue);
+const formData = reactive({ ...props.modelValue });
 
 watch(() => props.modelValue, (newVal) => {
-    formData = toRaw(newVal);
+    formData.value = newVal;
 });
 
 const setFieldRef = (field, ref) => {
@@ -51,16 +51,9 @@ const setSelected = (fieldId, value) => {
     refs[fieldId].setSelected(value);
 }
 
-const updateFormData = (idAndValue) => {
-    let { id, value } = { ...idAndValue };
-    formData = {
-        ...formData,
-        [id]: value,
-    };
-
-    emit('update', {
-        value: toRaw(formData),
-    });
+const updateFormData = ({ id, value }) => {
+    formData[id] = value;
+    emit('update:modelValue', { ...formData });
 };
 
 const onSubmit = (event) => {
@@ -75,12 +68,11 @@ const onSubmit = (event) => {
 };
 
 const getComponentName = (field) => {
-
-    let compName = field.type.charAt(0).toUpperCase() + field.type.slice(1);
-    
-    // Convert to CamelCase 
-    compName = compName.replace(/[_-](\w)/g, (_, match) => match.toUpperCase());
-
+    const compName = field.type
+        .charAt(0)
+        .toUpperCase() +
+        field.type.slice(1)
+        .replace(/[_-](\w)/g, (_, match) => match.toUpperCase());
     return defineAsyncComponent(() => import(`./fields/${compName}Field.vue`));
 };
 
@@ -103,13 +95,16 @@ label {
     display: inline-block;
     width: 100px;
     margin-bottom: 10px;
-
-    &#result-label {
-        width: 100%;
-        text-align: left;
-    }
 }
-input, select, textarea {
+
+label#result-label {
+    width: 100%;
+    text-align: left;
+}
+
+input,
+select,
+textarea {
     padding: 5px;
     width: 100%;
     margin-bottom: 10px;
@@ -118,16 +113,19 @@ input, select, textarea {
 [disabled] {
     cursor: not-allowed;
 }
+
 .button-container {
     text-align: center;
     margin-bottom: 20px;
-
-    button {
-        margin: auto;
-    }
 }
+
+.button-container button {
+    margin: auto;
+}
+
 .form-field {
     display: flex;
     align-items: center;
 }
 </style>
+
